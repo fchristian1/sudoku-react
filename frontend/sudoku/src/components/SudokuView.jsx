@@ -255,15 +255,20 @@ function SudokuView() {
                         <div key={iX} className="flex justify-between w-72 ">
                             {row?.map((cell, iY) => {
                                 return (
-                                    <SudokuCell
-                                        key={iX + iY}
-                                        idxY={iY}
-                                        idxX={iX}
-                                        data={data}
-                                        setData={setData}
-                                        selectedCell={selectedCell}
-                                        setSelectedCell={setSelectedCell}
-                                    />
+                                    <>
+                                        <SudokuCell
+                                            key={iX + iY}
+                                            idxY={iY}
+                                            idxX={iX}
+                                            data={data}
+                                            setData={setData}
+                                            selectedCell={selectedCell}
+                                            setSelectedCell={setSelectedCell}
+                                            showSelfHelping={showSelfHelping}
+                                        >
+                                            <SudokuSelfHelpingCell />
+                                        </SudokuCell>
+                                    </>
                                 );
                             })}
                         </div>
@@ -274,6 +279,8 @@ function SudokuView() {
                 data={data}
                 setData={setData}
                 selectedCell={selectedCell}
+                showSelfHelping={showSelfHelping}
+                setShowSelfHelping={setShowSelfHelping}
             />
         </>
     );
@@ -285,6 +292,8 @@ function SudokuCell({
     setData,
     selectedCell,
     setSelectedCell,
+    showSelfHelping,
+    children,
 }) {
     useEffect(() => {
         setText(data[idxX][idxY]);
@@ -300,7 +309,7 @@ function SudokuCell({
                 borderVerticalAtEveryThirdColumn(idxY) +
                 borderHorizontalAtEveryThirdRow(idxX) +
                 (selectedCell?.y === idxY && selectedCell?.x === idxX
-                    ? " bg-orange-200 "
+                    ? " bg-orange-200 hover:bg-orange-300 "
                     : " hover:bg-gray-200 ")
             }
             type="text"
@@ -331,11 +340,34 @@ function SudokuCell({
                     {text[2]}
                 </span>
             ) : null}
+            {text[1] == 0 && text[2] == 0 && showSelfHelping && (
+                <span className="flex  h-full w-full">{children}</span>
+            )}
         </div>
     );
 }
-
-function SudokuFieldMenu({ data, setData, selectedCell }) {
+function SudokuSelfHelpingCell({ data, setData }) {
+    return (
+        <div className=" text-[8px] w-8 grid grid-rows-3 grid-cols-3 items-center justify-center">
+            <div className="flex w-full justify-center">1</div>
+            <div className="flex w-full justify-center">2</div>
+            <div className="flex w-full justify-center">3</div>
+            <div className="flex w-full justify-center">4</div>
+            <div className="flex w-full justify-center">5</div>
+            <div className="flex w-full justify-center">6</div>
+            <div className="flex w-full justify-center">7</div>
+            <div className="flex w-full justify-center">8</div>
+            <div className="flex w-full justify-center">9</div>
+        </div>
+    );
+}
+function SudokuFieldMenu({
+    data,
+    setData,
+    selectedCell,
+    showSelfHelping,
+    setShowSelfHelping,
+}) {
     function handleNumberClick(number) {
         if (selectedCell) {
             const newData = data.map((row, iX) => {
@@ -352,75 +384,92 @@ function SudokuFieldMenu({ data, setData, selectedCell }) {
         }
     }
     return (
-        <div className="border-2 border-black select-none self-center m-2">
-            <div className="flex justify-between w-72 ">
-                <div
-                    onClick={() => handleNumberClick(1)}
-                    className="w-8 h-8 flex items-center justify-center border
+        <>
+            <div className="border-2 border-black select-none self-center m-2">
+                <div className="flex justify-between w-72 ">
+                    <div
+                        onClick={() => handleNumberClick(1)}
+                        className="w-8 h-8 flex items-center justify-center border
                     border-black cursor-pointer hover:bg-gray-200 "
-                    type="text"
-                >
-                    {" "}
-                    1
-                </div>
-                <div
-                    onClick={() => handleNumberClick(2)}
-                    className="w-8 h-8 flex items-center justify-center border border-black cursor-pointer hover:bg-gray-200 "
-                    type="text"
-                >
-                    2
-                </div>
-                <div
-                    onClick={() => handleNumberClick(3)}
-                    className="w-8 h-8 flex items-center justify-center border border-black cursor-pointer hover:bg-gray-200 "
-                    type="text"
-                >
-                    3
-                </div>
-                <div
-                    onClick={() => handleNumberClick(4)}
-                    className="w-8 h-8 flex items-center justify-center border border-black cursor-pointer hover:bg-gray-200  border-l-2 "
-                    type="text"
-                >
-                    4
-                </div>
-                <div
-                    onClick={() => handleNumberClick(5)}
-                    className="w-8 h-8 flex items-center justify-center border border-black cursor-pointer hover:bg-gray-200 "
-                    type="text"
-                >
-                    5
-                </div>
-                <div
-                    onClick={() => handleNumberClick(6)}
-                    className="w-8 h-8 flex items-center justify-center border border-black cursor-pointer hover:bg-gray-200 "
-                    type="text"
-                >
-                    6
-                </div>
-                <div
-                    onClick={() => handleNumberClick(7)}
-                    className="w-8 h-8 flex items-center justify-center border border-black cursor-pointer hover:bg-gray-200  border-l-2 "
-                    type="text"
-                >
-                    7
-                </div>
-                <div
-                    onClick={() => handleNumberClick(8)}
-                    className="w-8 h-8 flex items-center justify-center border border-black cursor-pointer hover:bg-gray-200 "
-                    type="text"
-                >
-                    8
-                </div>
-                <div
-                    onClick={() => handleNumberClick(9)}
-                    className="w-8 h-8 flex items-center justify-center border border-black cursor-pointer hover:bg-gray-200 "
-                    type="text"
-                >
-                    9
+                        type="text"
+                    >
+                        {" "}
+                        1
+                    </div>
+                    <div
+                        onClick={() => handleNumberClick(2)}
+                        className="w-8 h-8 flex items-center justify-center border border-black cursor-pointer hover:bg-gray-200 "
+                        type="text"
+                    >
+                        2
+                    </div>
+                    <div
+                        onClick={() => handleNumberClick(3)}
+                        className="w-8 h-8 flex items-center justify-center border border-black cursor-pointer hover:bg-gray-200 "
+                        type="text"
+                    >
+                        3
+                    </div>
+                    <div
+                        onClick={() => handleNumberClick(4)}
+                        className="w-8 h-8 flex items-center justify-center border border-black cursor-pointer hover:bg-gray-200  border-l-2 "
+                        type="text"
+                    >
+                        4
+                    </div>
+                    <div
+                        onClick={() => handleNumberClick(5)}
+                        className="w-8 h-8 flex items-center justify-center border border-black cursor-pointer hover:bg-gray-200 "
+                        type="text"
+                    >
+                        5
+                    </div>
+                    <div
+                        onClick={() => handleNumberClick(6)}
+                        className="w-8 h-8 flex items-center justify-center border border-black cursor-pointer hover:bg-gray-200 "
+                        type="text"
+                    >
+                        6
+                    </div>
+                    <div
+                        onClick={() => handleNumberClick(7)}
+                        className="w-8 h-8 flex items-center justify-center border border-black cursor-pointer hover:bg-gray-200  border-l-2 "
+                        type="text"
+                    >
+                        7
+                    </div>
+                    <div
+                        onClick={() => handleNumberClick(8)}
+                        className="w-8 h-8 flex items-center justify-center border border-black cursor-pointer hover:bg-gray-200 "
+                        type="text"
+                    >
+                        8
+                    </div>
+                    <div
+                        onClick={() => handleNumberClick(9)}
+                        className="w-8 h-8 flex items-center justify-center border border-black cursor-pointer hover:bg-gray-200 "
+                        type="text"
+                    >
+                        9
+                    </div>
                 </div>
             </div>
-        </div>
+            <div>
+                <button
+                    className={
+                        " border-1 border-black border rounded px-2 mx-2  " +
+                        (showSelfHelping
+                            ? " bg-orange-200 hover:bg-orange-300 "
+                            : " hover:bg-gray-200 ")
+                    }
+                    onClick={() => {
+                        setShowSelfHelping(!showSelfHelping);
+                    }}
+                >
+                    Hilfe
+                </button>
+            </div>
+        </>
     );
 }
 

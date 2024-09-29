@@ -513,26 +513,28 @@ function SudokuFieldMenu({
                     );
                 })}
             </div>
-            <button
-                onClick={() =>
-                    !(coins == 0) && setShowSelfHelping(!showSelfHelping)
-                }
-                disabled={!(coins > 0)}
-                className={
-                    " w-1/4 border border-1 border-black rounded-sm disabled:opacity-50 " +
-                    (showSelfHelping
-                        ? " bg-orange-300 hover:bg-orange-400 "
-                        : " hover:bg-orange-200 ")
-                }
-            >
-                Help {coins}/3
-            </button>
-            <button
-                onClick={() => handleSolveClick()}
-                className="w-1/4 border border-1 border-black rounded-sm"
-            >
-                Lösen
-            </button>
+            <div className="flex flex-row gap-2">
+                <button
+                    onClick={() =>
+                        !(coins == 0) && setShowSelfHelping(!showSelfHelping)
+                    }
+                    disabled={!(coins > 0)}
+                    className={
+                        " w-40 border border-1 border-black rounded-sm disabled:opacity-50 " +
+                        (showSelfHelping
+                            ? " bg-orange-300 hover:bg-orange-400 "
+                            : " hover:bg-orange-200 ")
+                    }
+                >
+                    Hilfe {coins}/3
+                </button>
+                <button
+                    onClick={() => handleSolveClick()}
+                    className="w-40 border border-1 border-black rounded-sm"
+                >
+                    Lösen
+                </button>
+            </div>
         </div>
     );
 }

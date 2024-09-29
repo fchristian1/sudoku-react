@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@layer components {
+    .button-primary {
+        @apply bg-gray-400 rounded p-1 border border-gray-600 m-1 hover:bg-gray-500;
+    }
+}

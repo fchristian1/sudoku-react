@@ -110,10 +110,18 @@ const borderVerticalAtEveryThirdColumn = (iY) => {
     return iY % 3 === 0 ? " border-l-2 border-black " : " ";
 };
 function checkSudoku({ data, setData, status, setStatus }) {
+    setHelperReset(data);
     checkRows({ data, setData });
     checkColumn({ data, setData });
     checkBoxes({ data, setData });
     setStatus(!status);
+}
+function setHelperReset(data) {
+    data.forEach((row) => {
+        row.forEach((cell) => {
+            cell[0].nohelper = [];
+        });
+    });
 }
 function checkRows({ data, setData }) {
     let isRowsValis = true;
@@ -130,6 +138,7 @@ function checkRows({ data, setData }) {
         }
         //get a set of all numbers with no duplicates
         const uniqueNumbers = [...new Set(numbers)];
+        setRowsHelper(data[iX], uniqueNumbers);
         //get duplicates from numbers and uniqueNumbers
         const duplicates = [
             ...new Set(
@@ -149,11 +158,17 @@ function checkRows({ data, setData }) {
 
         //console.log("numbers", numbers, "uniqueNumbers", uniqueNumbers);
         if (uniqueNumbers.length < numbers.length) {
-            console.log("row", iX, "is not valid");
             isRowsValis = false;
         }
     }
     return isRowsValis;
+}
+function setRowsHelper(row, uniqueNumbers) {
+    row.forEach((cell) => {
+        cell[0].nohelper = [
+            ...new Set([...cell[0].nohelper, ...uniqueNumbers]),
+        ];
+    });
 }
 function checkColumn({ data, setData }) {
     let isColumnsValid = true;
@@ -178,6 +193,10 @@ function checkColumn({ data, setData }) {
                 )
             ),
         ];
+        setColumnsHelper(
+            data.map((row) => row[iY]),
+            uniqueNumbers
+        );
         //set fail status to cells with duplicates in this row
         duplicates.length > 0 &&
             duplicates.forEach((d) => {
@@ -189,11 +208,17 @@ function checkColumn({ data, setData }) {
             });
         //console.log("numbers", numbers, "uniqueNumbers", uniqueNumbers);
         if (uniqueNumbers.length < numbers.length) {
-            console.log("column", iY, "is not valid");
             isColumnsValid = false;
         }
     }
     return isColumnsValid;
+}
+function setColumnsHelper(column, uniqueNumbers) {
+    column.forEach((cell) => {
+        cell[0].nohelper = [
+            ...new Set([...cell[0].nohelper, ...uniqueNumbers]),
+        ];
+    });
 }
 function checkBoxes({ data, setData }) {
     let isBoxesValid = true;
@@ -217,6 +242,13 @@ function checkBoxes({ data, setData }) {
                     )
                 ),
             ];
+            setBoxesHelper(
+                data
+                    .slice(iX * 3, iX * 3 + 3)
+                    .map((row) => row.slice(iY * 3, iY * 3 + 3))
+                    .flat(),
+                [...new Set(numbers)]
+            );
             //set fail status to cells with duplicates in this row
             duplicates.length > 0 &&
                 duplicates.forEach((d) => {
@@ -230,29 +262,75 @@ function checkBoxes({ data, setData }) {
                 });
             const uniqueNumbers = [...new Set(numbers)];
             if (uniqueNumbers.length < numbers.length) {
-                console.log("box", iX, iY, "is not valid");
                 isBoxesValid = false;
             }
         }
     }
     return isBoxesValid;
 }
+function setBoxesHelper(boxes, uniqueNumbers) {
+    boxes.forEach((cell) => {
+        cell[0].nohelper = [
+            ...new Set([...cell[0].nohelper, ...uniqueNumbers]),
+        ];
+    });
+}
+
 function SudokuView() {
     const [data, setData] = useState(dumpData);
     const [selectedCell, setSelectedCell] = useState(null);
     const [showSelfHelping, setShowSelfHelping] = useState(false);
     const [status, setStatus] = useState(true);
+    const [coins, setCoins] = useState(3);
     useEffect(() => {
         //selectedCell && console.log("selectedCell", selectedCell);
         //data && console.log("data", data);
         checkSudoku({ data, setData, status, setStatus });
     }, [data, selectedCell]);
+    function checkSolveStep({ data, setData }) {
+        return (
+            checkRows({ data, setData }) &&
+            checkColumn({ data, setData }) &&
+            checkBoxes({ data, setData })
+        );
+    }
+    let N = 9;
+    function solveStep(x, y, data, setData) {
+        setStatus(!status);
+        if (x == N - 1 && y == N) {
+            return true;
+        }
+        if (y == N) {
+            x++;
+            y = 0;
+        }
+        if (data[x][y][1] != 0) {
+            return solveStep(x, y + 1, data, setData);
+        }
+        for (let num = 1; num < 10; num++) {
+            data[x][y][2] = num;
+            if (checkSolveStep({ data, setData })) {
+                if (solveStep(x, y + 1, data, setData)) {
+                    return true;
+                }
+            }
+            data[x][y][2] = 0;
+        }
+        return false;
+    }
+    function solve() {
+        let solve = solveStep(0, 0, data, setData);
+        console.log("solve");
+    }
     return (
         <>
-            <div className=" text-2xl border-2 border-black select-none self-center m-2">
+            <div className=" text-2xl border-2 border-black select-none self-center min-h-96 min-w-96">
                 {data?.map((row, iX) => {
                     return (
-                        <div key={iX} className="flex justify-between w-72 ">
+                        <div
+                            key={iX}
+                            className="grid grid-cols-9 justify-between h-11"
+                        >
                             {row?.map((cell, iY) => {
                                 return (
                                     <SudokuCell
@@ -263,7 +341,23 @@ function SudokuView() {
                                         setData={setData}
                                         selectedCell={selectedCell}
                                         setSelectedCell={setSelectedCell}
-                                    />
+                                        showSelfHelping={showSelfHelping}
+                                        setShowSelfHelping={setShowSelfHelping}
+                                    >
+                                        <SudokuSelfHelpingCell
+                                            key={iX + iY}
+                                            idxY={iY}
+                                            idxX={iX}
+                                            data={data}
+                                            setData={setData}
+                                            selectedCell={selectedCell}
+                                            setSelectedCell={setSelectedCell}
+                                            showSelfHelping={showSelfHelping}
+                                            setShowSelfHelping={
+                                                setShowSelfHelping
+                                            }
+                                        />
+                                    </SudokuCell>
                                 );
                             })}
                         </div>
@@ -274,6 +368,11 @@ function SudokuView() {
                 data={data}
                 setData={setData}
                 selectedCell={selectedCell}
+                showSelfHelping={showSelfHelping}
+                setShowSelfHelping={setShowSelfHelping}
+                coins={coins}
+                setCoins={setCoins}
+                solve={solve}
             />
         </>
     );
@@ -285,6 +384,7 @@ function SudokuCell({
     setData,
     selectedCell,
     setSelectedCell,
+    children,
 }) {
     useEffect(() => {
         setText(data[idxX][idxY]);
@@ -296,19 +396,19 @@ function SudokuCell({
                 text[1] == 0 && setSelectedCell({ y: idxY, x: idxX });
             }}
             className={
-                "w-8 h-8 flex items-center justify-center border border-black cursor-pointer " +
+                "flex items-center justify-center border border-black cursor-pointer w-full h-full" +
                 borderVerticalAtEveryThirdColumn(idxY) +
                 borderHorizontalAtEveryThirdRow(idxX) +
                 (selectedCell?.y === idxY && selectedCell?.x === idxX
-                    ? " bg-orange-200 "
-                    : " hover:bg-gray-200 ")
+                    ? " bg-orange-300 hover:bg-orange-400 "
+                    : " hover:bg-orange-200 ")
             }
             type="text"
         >
             {text[1] != 0 && (
                 <span
                     className={
-                        "flex items-center justify-center h-full w-full bg-gray-400 font-extrabold " +
+                        "flex items-center justify-center  bg-gray-400 font-extrabold w-full h-full " +
                         ((text[0].failRow ||
                             text[0].failColumn ||
                             text[0].failBox) &&
@@ -318,10 +418,10 @@ function SudokuCell({
                     {text[1]}
                 </span>
             )}
-            {text[1] == 0 && text[2] != 0 ? (
+            {text[1] == 0 && text[2] != 0 && (
                 <span
                     className={
-                        "flex items-center justify-center h-full w-full font-cookie font-extrabold " +
+                        "flex items-center justify-center  font-cookie font-extrabold w-full h-full " +
                         ((text[0].failRow ||
                             text[0].failColumn ||
                             text[0].failBox) &&
@@ -330,12 +430,50 @@ function SudokuCell({
                 >
                     {text[2]}
                 </span>
-            ) : null}
+            )}
+            {text[1] == 0 && text[2] == 0 && children}
         </div>
     );
 }
-
-function SudokuFieldMenu({ data, setData, selectedCell }) {
+function SudokuSelfHelpingCell({
+    idxX,
+    idxY,
+    data,
+    setData,
+    selectedCell,
+    setSelectedCell,
+    showSelfHelping,
+    setShowSelfHelping,
+}) {
+    return (
+        showSelfHelping && (
+            <div className="grid grid-cols-3 text-[0.5rem] h-full w-full">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => {
+                    return (
+                        <div
+                            key={"shc" + i}
+                            className="flex leading-none justify-center items-center"
+                        >
+                            {data[idxX][idxY][0].nohelper.length == 8 &&
+                                !data[idxX][idxY][0].nohelper.includes(i) &&
+                                i}
+                        </div>
+                    );
+                })}
+            </div>
+        )
+    );
+}
+function SudokuFieldMenu({
+    data,
+    setData,
+    selectedCell,
+    showSelfHelping,
+    setShowSelfHelping,
+    coins,
+    setCoins,
+    solve,
+}) {
     function handleNumberClick(number) {
         if (selectedCell) {
             const newData = data.map((row, iX) => {
@@ -349,77 +487,52 @@ function SudokuFieldMenu({ data, setData, selectedCell }) {
                 });
             });
             setData(newData);
+            setShowSelfHelping(false);
+            setCoins(coins - 1);
         }
     }
+    function handleSolveClick() {
+        solve();
+    }
     return (
-        <div className="border-2 border-black select-none self-center m-2">
-            <div className="flex justify-between w-72 ">
-                <div
-                    onClick={() => handleNumberClick(1)}
-                    className="w-8 h-8 flex items-center justify-center border
-                    border-black cursor-pointer hover:bg-gray-200 "
-                    type="text"
-                >
-                    {" "}
-                    1
-                </div>
-                <div
-                    onClick={() => handleNumberClick(2)}
-                    className="w-8 h-8 flex items-center justify-center border border-black cursor-pointer hover:bg-gray-200 "
-                    type="text"
-                >
-                    2
-                </div>
-                <div
-                    onClick={() => handleNumberClick(3)}
-                    className="w-8 h-8 flex items-center justify-center border border-black cursor-pointer hover:bg-gray-200 "
-                    type="text"
-                >
-                    3
-                </div>
-                <div
-                    onClick={() => handleNumberClick(4)}
-                    className="w-8 h-8 flex items-center justify-center border border-black cursor-pointer hover:bg-gray-200  border-l-2 "
-                    type="text"
-                >
-                    4
-                </div>
-                <div
-                    onClick={() => handleNumberClick(5)}
-                    className="w-8 h-8 flex items-center justify-center border border-black cursor-pointer hover:bg-gray-200 "
-                    type="text"
-                >
-                    5
-                </div>
-                <div
-                    onClick={() => handleNumberClick(6)}
-                    className="w-8 h-8 flex items-center justify-center border border-black cursor-pointer hover:bg-gray-200 "
-                    type="text"
-                >
-                    6
-                </div>
-                <div
-                    onClick={() => handleNumberClick(7)}
-                    className="w-8 h-8 flex items-center justify-center border border-black cursor-pointer hover:bg-gray-200  border-l-2 "
-                    type="text"
-                >
-                    7
-                </div>
-                <div
-                    onClick={() => handleNumberClick(8)}
-                    className="w-8 h-8 flex items-center justify-center border border-black cursor-pointer hover:bg-gray-200 "
-                    type="text"
-                >
-                    8
-                </div>
-                <div
-                    onClick={() => handleNumberClick(9)}
-                    className="w-8 h-8 flex items-center justify-center border border-black cursor-pointer hover:bg-gray-200 "
-                    type="text"
-                >
-                    9
-                </div>
+        <div className="flex flex-col items-center">
+            <div className="border-2 border-black select-none self-center m-2 w-96 h-11 flex justify-between">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => {
+                    return (
+                        <div
+                            key={"fm" + i}
+                            onClick={() => handleNumberClick(i)}
+                            className={
+                                "flex items-center justify-center border-1 border w-full border-black cursor-pointer hover:bg-gray-200 " +
+                                (i % 3 === 0 && i != 9 ? " border-r-2 " : " ")
+                            }
+                            type="text"
+                        >
+                            {i}
+                        </div>
+                    );
+                })}
             </div>
+            <button
+                onClick={() =>
+                    !(coins == 0) && setShowSelfHelping(!showSelfHelping)
+                }
+                disabled={!(coins > 0)}
+                className={
+                    " w-1/4 border border-1 border-black rounded-sm disabled:opacity-50 " +
+                    (showSelfHelping
+                        ? " bg-orange-300 hover:bg-orange-400 "
+                        : " hover:bg-orange-200 ")
+                }
+            >
+                Help {coins}/3
+            </button>
+            <button
+                onClick={() => handleSolveClick()}
+                className="w-1/4 border border-1 border-black rounded-sm"
+            >
+                Lösen
+            </button>
         </div>
     );
 }

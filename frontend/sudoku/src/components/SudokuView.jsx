@@ -487,8 +487,8 @@ function SudokuFieldMenu({
                 });
             });
             setData(newData);
+            showSelfHelping == true && setCoins(coins - 1);
             setShowSelfHelping(false);
-            setCoins(coins - 1);
         }
     }
     function handleSolveClick() {
